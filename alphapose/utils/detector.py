@@ -3,6 +3,8 @@ import sys
 from threading import Thread
 from queue import Queue
 
+import imageio
+
 import cv2
 import scipy.misc
 import numpy as np
@@ -139,7 +141,8 @@ class DetectionLoader():
                 # add one dimension at the front for batch if image shape (3,h,w)
                 if img_k.dim() == 3:
                     img_k = img_k.unsqueeze(0)
-                orig_img_k = scipy.misc.imread(im_name_k, mode='RGB')
+                # orig_img_k = scipy.misc.imread(im_name_k, mode='RGB')
+                orig_img_k = imageio.imread(im_name_k, pilmode='RGB')
                 im_dim_list_k = orig_img_k.shape[1], orig_img_k.shape[0]
 
                 imgs.append(img_k)

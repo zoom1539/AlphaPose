@@ -9,6 +9,8 @@ import numpy as np
 import torch
 from tqdm import tqdm
 
+import matplotlib.pyplot as plt 
+
 from detector.apis import get_detector
 from alphapose.models import builder
 from alphapose.utils.config import update_config
@@ -21,9 +23,13 @@ from alphapose.utils.writer import DataWriter
 
 """----------------------------- Demo options -----------------------------"""
 parser = argparse.ArgumentParser(description='AlphaPose Demo')
-parser.add_argument('--cfg', type=str, required=True,
+parser.add_argument('--cfg', type=str, 
+# required=True, 
+                    default='configs/coco/resnet/256x192_res50_lr1e-3_1x.yaml',
                     help='experiment configure file name')
-parser.add_argument('--checkpoint', type=str, required=True,
+parser.add_argument('--checkpoint', type=str, 
+# required=True, 
+                    default='pretrained_models/fast_res50_256x192.pth',
                     help='checkpoint file name')
 parser.add_argument('--sp', default=False, action='store_true',
                     help='Use single process for pytorch')
@@ -35,11 +41,11 @@ parser.add_argument('--indir', dest='inputpath',
                     help='image-directory', default="")
 parser.add_argument('--list', dest='inputlist',
                     help='image-list', default="")
-parser.add_argument('--image', dest='inputimg',
-                    help='image-name', default="")
+parser.add_argument('--image', dest='inputimg', default= 'examples/demo/4.png',
+                    help='image-name')
 parser.add_argument('--outdir', dest='outputpath',
                     help='output-directory', default="examples/res/")
-parser.add_argument('--save_img', default=False, action='store_true',
+parser.add_argument('--save_img', default=True, action='store_true',
                     help='save result as image')
 parser.add_argument('--vis', default=False, action='store_true',
                     help='visualize image')
@@ -214,6 +220,23 @@ if __name__ == "__main__":
             start_time = getTime()
             with torch.no_grad():
                 (inps, orig_img, im_name, boxes, scores, ids, cropped_boxes) = det_loader.read()
+
+                # TODO
+                # inps_ = inps.cpu().numpy()
+                # plt.subplot(1,6,1)
+                # plt.imshow(inps_[0].transpose(1,2,0))
+                # plt.subplot(1,6,2)
+                # plt.imshow(inps_[1].transpose(1,2,0))
+                # plt.subplot(1,6,3)
+                # plt.imshow(inps_[2].transpose(1,2,0))
+                # plt.subplot(1,6,4)
+                # plt.imshow(inps_[3].transpose(1,2,0))
+                # plt.subplot(1,6,5)
+                # plt.imshow(inps_[4].transpose(1,2,0))
+                # plt.subplot(1,6,6)
+                # plt.imshow(orig_img)
+                # plt.show()
+
                 if orig_img is None:
                     break
                 if boxes is None or boxes.nelement() == 0:
@@ -232,9 +255,18 @@ if __name__ == "__main__":
                 hm = []
                 for j in range(num_batches):
                     inps_j = inps[j * batchSize:min((j + 1) * batchSize, datalen)]
+                    # TODO
+                    # inps_j = inps[0:1]
+
                     if args.flip:
                         inps_j = torch.cat((inps_j, flip(inps_j)))
                     hm_j = pose_model(inps_j)
+                    # TODO
+                    # hm_j_ = hm_j.cpu().numpy()
+                    # plt.subplot(1,1,1)
+                    # plt.imshow(hm_j_[0].transpose(1,2,0))
+                    # plt.show()
+
                     if args.flip:
                         hm_j_flip = flip_heatmap(hm_j[int(len(hm_j) / 2):], det_loader.joint_pairs, shift=True)
                         hm_j = (hm_j[0:int(len(hm_j) / 2)] + hm_j_flip) / 2
