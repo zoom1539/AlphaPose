@@ -121,7 +121,7 @@ class PoseEstimator():
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--work_dir", type=str, default="examples/work_dir")
+    parser.add_argument("--work_dir", type=str, default="/data1/dataset/smoking/dataset_annotation_work_dir")
     parser.add_argument('--cfg', type=str, default='configs/coco/resnet/256x192_res50_lr1e-3_1x.yaml', help='experiment configure file name')
     parser.add_argument('--checkpoint', type=str, default='pretrained_models/fast_res50_256x192.pth', help='checkpoint file name')
     return parser.parse_args()
