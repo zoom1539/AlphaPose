@@ -51,7 +51,7 @@ class PoseEstimator():
         #
         label_path = video_path.replace('.avi', '.json')
         with open(label_path, 'r') as f:
-            labels = json.loads(f.read())
+            labels = json.loads(f.read()) # [bbox_xyxy, label]
 
         #
         joints_dict = dict()
@@ -59,6 +59,10 @@ class PoseEstimator():
         while video.grab():
             frame_id += 1
             _, img_bgr = video.retrieve()
+
+            bbox_xyxy = labels[frame_id][0]
+            xmin, ymin, xmax, ymax = [int(coord) for coord in bbox_xyxy]
+            img_bgr = img_bgr[ymin:ymax, xmin:xmax]
             img_bgr = cv2.resize(img_bgr, self.resolution)
             
             img_tensor = self.img_preprocess(img_bgr)
@@ -68,7 +72,7 @@ class PoseEstimator():
             heatmap_cpu = heatmap.cpu()
             coords, scores = self.postprocess(heatmap_cpu, (img_bgr.shape[1], img_bgr.shape[0]))
             
-            self.draw_joint(img_bgr, coords, labels[frame_id])
+            self.draw_joint(img_bgr, coords, labels[frame_id][1])
             
             video_writer.write(img_bgr)
             
