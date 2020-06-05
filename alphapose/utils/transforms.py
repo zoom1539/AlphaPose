@@ -601,15 +601,23 @@ def heatmap_to_coord_simple(hms, bbox):
     preds = np.zeros_like(coords)
 
     # transform bbox to scale
+    # ORIGINAL CODE
+    # xmin, ymin, xmax, ymax = bbox
+    # w = xmax - xmin + 1
+    # h = ymax - ymin + 1
+    # center = np.array([xmin + w * 0.5, ymin + h * 0.5])
+    # scale = np.array([w, h])
+    # # Transform back
+    # for i in range(coords.shape[0]):
+    #     preds[i] = transform_preds(coords[i], center, scale,
+    #                                [hm_w, hm_h])
+
     xmin, ymin, xmax, ymax = bbox
-    w = xmax - xmin
-    h = ymax - ymin
-    center = np.array([xmin + w * 0.5, ymin + h * 0.5])
-    scale = np.array([w, h])
-    # Transform back
+    w = xmax - xmin + 1
+    h = ymax - ymin + 1
+    scale = np.array([w / hm_w, h / hm_h])
     for i in range(coords.shape[0]):
-        preds[i] = transform_preds(coords[i], center, scale,
-                                   [hm_w, hm_h])
+        preds[i] = coords[i] * scale
 
     return preds, maxvals
 

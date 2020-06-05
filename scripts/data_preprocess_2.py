@@ -1,5 +1,5 @@
 import os
-import tqdm
+from tqdm import tqdm
 import argparse
 import json
 import numpy as np
@@ -46,7 +46,7 @@ class PoseEstimator():
         # fourcc = cv2.VideoWriter_fourcc( *'XVID')
         fourcc = cv2.VideoWriter_fourcc('M','J','P','G') 
         video_save_path = video_path.replace('.avi', '_.avi')
-        video_writer = cv2.VideoWriter(video_save_path, fourcc, fps, self.resolution)
+        video_writer = cv2.VideoWriter(video_save_path, fourcc, fps, (width, height))
 
         #
         label_path = video_path.replace('.avi', '.json')
@@ -58,11 +58,13 @@ class PoseEstimator():
         frame_id = -1
         while video.grab():
             frame_id += 1
-            _, img_bgr = video.retrieve()
+            _, img_bgr_origin = video.retrieve()
 
             bbox_xyxy = labels[frame_id][0]
+
             xmin, ymin, xmax, ymax = [int(coord) for coord in bbox_xyxy]
-            img_bgr = img_bgr[ymin:ymax, xmin:xmax]
+            img_bgr = img_bgr_origin[0:(ymax - ymin + 1), 0:(xmax - xmin + 1)]
+
             img_bgr = cv2.resize(img_bgr, self.resolution)
             
             img_tensor = self.img_preprocess(img_bgr)
@@ -70,15 +72,12 @@ class PoseEstimator():
             with torch.no_grad():
                 heatmap = self.pose_model(img_tensor_cuda)
             heatmap_cpu = heatmap.cpu()
-            coords, scores = self.postprocess(heatmap_cpu, (img_bgr.shape[1], img_bgr.shape[0]))
-            
-            self.draw_joint(img_bgr, coords, labels[frame_id][1])
-            
-            video_writer.write(img_bgr)
-            
-            # cv2.imshow('joints', img_bgr)
-            # cv2.waitKey()
+            coords, scores = self.postprocess(heatmap_cpu, (xmax - xmin + 1, ymax - ymin + 1))
 
+            self.draw_joint(img_bgr_origin, coords, labels[frame_id][1])
+            
+            video_writer.write(img_bgr_origin)
+            
             joints_dict[frame_id]=dict(coords = coords.tolist(), scores = scores.tolist(), label = labels[frame_id])
         
         video_writer.release()
@@ -147,6 +146,6 @@ if __name__ == "__main__":
 
     pose_estimator = PoseEstimator(args, cfg)
 
-    for video_path in video_paths:
+    for video_path in tqdm(video_paths):
         pose_estimator.run(video_path)
     
