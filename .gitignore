@@ -117,3 +117,4 @@ tmp_*/
 examples/res/
 *.png
 test.py
+detector/yolo/imgs/messi.jpg
