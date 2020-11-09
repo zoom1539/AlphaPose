@@ -216,7 +216,7 @@ def write_results(prediction, confidence, num_classes, nms=True, nms_conf=0.4):
             num += 1
     
     if not num:
-        return 0
+        return 
 
     return output
 

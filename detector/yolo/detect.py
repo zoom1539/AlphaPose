@@ -16,6 +16,20 @@ import random
 import pickle as pkl
 import itertools
 
+def write(x, img):
+    print('x: ',x)
+    c1 = tuple(x[1:3].int())
+    c2 = tuple(x[3:5].int())
+    cls = int(x[-1])
+    label = "{0}".format(classes[cls])
+    #color = random.choice(colors)
+    color = (255,0,0)
+    cv2.rectangle(img, c1, c2,color, 1)
+    t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 1 , 1)[0]
+    c2 = c1[0] + t_size[0] + 3, c1[1] + t_size[1] + 4
+    cv2.rectangle(img, c1, c2,color, -1)
+    cv2.putText(img, label, (c1[0], c1[1] + t_size[1] + 4), cv2.FONT_HERSHEY_PLAIN, 1, [225,255,255], 1);
+    return img
 
 if __name__ == '__main__':
 
@@ -33,7 +47,7 @@ if __name__ == '__main__':
     #Set up the neural network
     print("Loading network.....")
     model = Darknet("cfg/yolov3-spp.cfg")
-    model.load_weights("yolov3-spp.weights")
+    model.load_weights("data/yolov3-spp.weights")
     print("Network successfully loaded")
 
     model.net_info["height"] = "608"
@@ -64,14 +78,18 @@ if __name__ == '__main__':
 
     if CUDA:
         im_dim_list = im_dim_list.cuda()
-
+        print('cuda count: ', torch.cuda.device_count())
 
     for batch in im_batches:
         #load the image
         if CUDA:
             batch = batch.cuda()
         with torch.no_grad():
-            prediction = model(Variable(batch), CUDA)
+            parser = argparse.ArgumentParser(description='AlphaPose Demo')
+            args = parser.parse_args()
+            args.device = torch.device("cuda:0")
+            # args.device = torch.device("cpu")
+            prediction = model(Variable(batch), args)
 
         prediction = write_results(prediction, confidence, num_classes, nms=True, nms_conf=nms_thesh)
         output = prediction
@@ -101,3 +119,7 @@ if __name__ == '__main__':
 
     print(output)
     print(output.shape)
+
+    img = cv2.imread(imlist[0])
+    list(map(lambda x: write(x, img), output))
+    cv2.imwrite('result.jpg', img)
