@@ -242,7 +242,7 @@ def parse_args():
     parser.add_argument("--config_deepsort", type=str,
                         default="./configs/deep_sort.yaml")
     parser.add_argument("--dataset_dir", type=str,
-                        default='/data1/zhumh/zjlab_action_segments')
+                        default='/data1/zhumh/falling_test')
     parser.add_argument("--work_dir", type=str,
                         default="/data1/zhumh/yolo_test/work_dir")
     parser.add_argument("--cpu", dest="use_cuda",

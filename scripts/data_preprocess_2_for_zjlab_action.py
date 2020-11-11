@@ -95,7 +95,23 @@ class PoseEstimator():
         label_save_path = video_path.replace('.avi', '_joint.json')
         with open(label_save_path, 'w') as json_writer:
             json.dump(joints_dict, json_writer)
-    
+
+        # 
+        head_save_path = video_path.replace('.avi', '_head.txt')
+        self.save_to_txt(head_save_path, joints_dict)
+
+    def save_to_txt(self, head_save_path, joints_dict):
+        file = open(head_save_path, 'w')
+        for key, value in joints_dict.items():
+            file.write(str(key))
+            file.write(' ')
+            if value:
+                file.write(str(value['coords'][0][0]))
+                file.write(' ')
+                file.write(str(value['coords'][0][1]))
+            file.write('\n')
+        file.close()
+
     def img_preprocess(self, img_bgr):
         img_rgb = img_bgr[:,:,::-1].copy()
         img_rgb = img_rgb / 255.0
@@ -134,7 +150,7 @@ class PoseEstimator():
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--work_dir", type=str, default="/data1/zhumh/zjlab_action_segments")
+    parser.add_argument("--work_dir", type=str, default="/data1/zhumh/falling_test")
     parser.add_argument('--cfg', type=str, default='configs/coco/resnet/256x192_res50_lr1e-3_1x.yaml', help='experiment configure file name')
     parser.add_argument('--checkpoint', type=str, default='pretrained_models/fast_res50_256x192.pth', help='checkpoint file name')
     return parser.parse_args()
