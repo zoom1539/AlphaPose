@@ -56,6 +56,7 @@ class PoseEstimator():
 
         #
         joints_dict = dict()
+        data = []
         frame_id = -1
         while video.grab():
             frame_id += 1
@@ -77,23 +78,33 @@ class PoseEstimator():
                 coords, scores = self.postprocess(heatmap_cpu, (xmax - xmin, ymax - ymin))
                 coords = [coord + np.array([xmin, ymin]) for coord in coords]
                 coords = np.array(coords)
+                scores = [score[0] for score in scores]
 
-                # self.draw_joint(img_bgr_origin, coords, labels[frame_id][1])
                 self.draw_joint(img_bgr_origin, coords)
                 
                 video_writer.write(img_bgr_origin)
                 
-                # joints_dict[frame_id]=dict(coords = coords.tolist(), scores = scores.tolist(), label = labels[frame_id])
-                joints_dict[frame_id]=dict(coords = coords.tolist(), scores = scores.tolist())
+                # joints_dict[frame_id]=dict(coords = coords.tolist(), scores = scores.tolist())
+                coords_norm = [ coord / np.array([width, height]) for coord in coords]
+                coords_norm = np.array(coords_norm)
+
+                coords_norm = coords_norm.reshape(1, -1)
+                scores = np.array(scores).reshape(1, -1)
+                datum = dict(frame_index = frame_id + 1, skeleton = [dict(pose = coords_norm.tolist()[0], score = scores.tolist()[0])])
+                data.append(datum)
             else:
                 video_writer.write(img_bgr_origin)
-                joints_dict[frame_id]= {}
+                # joints_dict[frame_id]= {}
+                datum = dict(frame_index = frame_id + 1, skeleton = [])
+                data.append(datum)
+
 
         video_writer.release()
         # cv2.destroyAllWindows()
 
         label_save_path = video_path.replace('.avi', '_joint.json')
         with open(label_save_path, 'w') as json_writer:
+            joints_dict = dict(data = data, label = "null", label_index = -1)
             json.dump(joints_dict, json_writer)
 
         # 
